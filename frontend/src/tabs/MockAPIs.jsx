@@ -14,7 +14,7 @@ const BLANK = {
   description: '',
 };
 
-export default function MockAPIs() {
+export default function MockAPIs({ onLoad }) {
   const toast = useToast();
   const [mocks, setMocks]       = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -205,7 +205,18 @@ export default function MockAPIs() {
             onCancel={() => { setShowForm(false); setEditing(null); }}
           />
         ) : selected ? (
-          <MockDetail mock={selected} onEdit={() => openEdit(selected)} />
+          <MockDetail
+            mock={selected}
+            onEdit={() => openEdit(selected)}
+            onTest={() => {
+              onLoad({
+                url: `${window.location.protocol}//${window.location.hostname}:5000/mock/${selected.endpointPath}`,
+                method: selected.method,
+                headers: {},
+                body: null,
+              });
+            }}
+          />
         ) : (
           <div className="empty-state" style={{ marginTop:60 }}>
             <div className="empty-state-icon">◈</div>
@@ -273,7 +284,7 @@ function MockForm({ form, setForm, editing, saving, onSubmit, onCancel }) {
   );
 }
 
-function MockDetail({ mock, onEdit }) {
+function MockDetail({ mock, onEdit, onTest }) {
   const baseUrl = `${window.location.protocol}//${window.location.hostname}:5000`;
   const fullUrl = `${baseUrl}/mock/${mock.endpointPath}`;
 
@@ -282,7 +293,10 @@ function MockDetail({ mock, onEdit }) {
       <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:20 }}>
         <span className={`method-badge method-${mock.method}`}>{mock.method}</span>
         <span style={{ fontSize:15, fontWeight:600, color:'var(--text)' }}>/{mock.endpointPath}</span>
-        <button className="btn btn-ghost btn-sm" onClick={onEdit} style={{ marginLeft:'auto' }}>
+        <button className="btn btn-success btn-sm" onClick={onTest} style={{ marginLeft:'auto' }}>
+          ▶ Test in Tester
+        </button>
+        <button className="btn btn-ghost btn-sm" onClick={onEdit}>
           Edit
         </button>
       </div>
