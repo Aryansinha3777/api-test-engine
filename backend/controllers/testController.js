@@ -1,4 +1,5 @@
 const axios = require("axios");
+const RequestHistory = require("../models/RequestHistory");
 
 const testRequest = async (req, res) => {
   const { url, method = "GET", headers = {}, body } = req.body;
@@ -73,6 +74,20 @@ const testRequest = async (req, res) => {
       responseHeaders[key] = val;
     });
 
+    const size = Buffer.byteLength(response.data || "", "utf8");
+
+    // Auto-save to history (fire-and-forget, never block the response)
+    RequestHistory.create({
+      url,
+      method: upperMethod,
+      headers: cleanHeaders,
+      body: axiosConfig.data || null,
+      statusCode: response.status,
+      responseTime,
+      responseSize: size,
+      success: true,
+    }).catch(() => {}); // silently ignore if history save fails
+
     return res.json({
       success: true,
       statusCode: response.status,
@@ -81,12 +96,25 @@ const testRequest = async (req, res) => {
       isJson,
       data: responseData,
       headers: responseHeaders,
-      size: Buffer.byteLength(response.data || "", "utf8"),
+      size,
     });
   } catch (err) {
     const responseTime = Date.now() - startTime;
 
     if (err.code) {
+      // Save failed/network error to history too
+      RequestHistory.create({
+        url,
+        method: upperMethod,
+        headers: {},
+        body: null,
+        statusCode: null,
+        responseTime,
+        responseSize: null,
+        success: false,
+        errorMessage: err.message,
+      }).catch(() => {});
+
       return res.status(200).json({
         success: false,
         error: true,

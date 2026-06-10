@@ -111,6 +111,7 @@ const deleteMock = async (req, res) => {
 
 
 const resetHits = async (req, res) => {
+  
   try {
     const updated = await MockAPI.findByIdAndUpdate(
       req.params.id,

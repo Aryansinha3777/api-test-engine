@@ -3,11 +3,13 @@ import { ToastProvider } from './context/ToastContext';
 import ApiTester from './tabs/ApiTester';
 import MockAPIs from './tabs/MockAPIs';
 import SavedRequests from './tabs/SavedRequests';
+import History from './tabs/History';
 
 const TABS = [
   { id: 'tester',  label: '⬡ API Tester' },
   { id: 'mock',    label: '◈ Mock APIs' },
   { id: 'saved',   label: '◎ Collections' },
+  { id: 'history', label: '⟳ History' },
 ];
 
 export default function App() {
@@ -58,8 +60,9 @@ export default function App() {
               onClearLoaded={() => setLoadedRequest(null)}
             />
           )}
-          {activeTab === 'mock' && <MockAPIs />}
+          {activeTab === 'mock' && <MockAPIs onLoad={handleLoadRequest} />}
           {activeTab === 'saved' && <SavedRequests onLoad={handleLoadRequest} />}
+          {activeTab === 'history' && <History onLoad={handleLoadRequest} />}
         </main>
       </div>
     </ToastProvider>
