@@ -1,0 +1,21 @@
+const mongoose = require("mongoose");
+
+const environmentSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Environment name is required"],
+      trim: true,
+      maxlength: [100, "Name cannot exceed 100 characters"],
+    },
+    variables: [
+      {
+        key: { type: String, required: true, trim: true },
+        value: { type: String, default: "", trim: true },
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Environment", environmentSchema);

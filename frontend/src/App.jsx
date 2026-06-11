@@ -4,17 +4,20 @@ import ApiTester from './tabs/ApiTester';
 import MockAPIs from './tabs/MockAPIs';
 import SavedRequests from './tabs/SavedRequests';
 import History from './tabs/History';
+import Environments from './tabs/Environments';
 
 const TABS = [
-  { id: 'tester',  label: '⬡ API Tester' },
-  { id: 'mock',    label: '◈ Mock APIs' },
-  { id: 'saved',   label: '◎ Collections' },
-  { id: 'history', label: '⟳ History' },
+  { id: 'tester',       label: '⬡ API Tester' },
+  { id: 'mock',         label: '◈ Mock APIs' },
+  { id: 'saved',        label: '◎ Collections' },
+  { id: 'history',      label: '⟳ History' },
+  { id: 'environments', label: '⚙ Environments' },
 ];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('tester');
   const [loadedRequest, setLoadedRequest] = useState(null);
+  const [activeEnv, setActiveEnv] = useState(null);
   
   
   const handleLoadRequest = (req) => {
@@ -58,11 +61,18 @@ export default function App() {
             <ApiTester
               loadedRequest={loadedRequest}
               onClearLoaded={() => setLoadedRequest(null)}
+              activeEnv={activeEnv}
             />
           )}
           {activeTab === 'mock' && <MockAPIs onLoad={handleLoadRequest} />}
           {activeTab === 'saved' && <SavedRequests onLoad={handleLoadRequest} />}
           {activeTab === 'history' && <History onLoad={handleLoadRequest} />}
+          {activeTab === 'environments' && (
+            <Environments
+              activeEnvId={activeEnv?._id}
+              onActivate={(env) => setActiveEnv(env)}
+            />
+          )}
         </main>
       </div>
     </ToastProvider>

@@ -1,15 +1,35 @@
 const axios = require("axios");
 const RequestHistory = require("../models/RequestHistory");
 
-const testRequest = async (req, res) => {
-  const { url, method = "GET", headers = {}, body } = req.body;
+// Resolves {{variableName}} patterns using the provided variables map
+// e.g. "{{baseUrl}}/users" + { baseUrl: "http://localhost:3000" } => "http://localhost:3000/users"
+function resolveVariables(str, variables = {}) {
+  if (!str || typeof str !== "string") return str;
+  return str.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    return variables.hasOwnProperty(key) ? variables[key] : match;
+  });
+}
 
-  if (!url) {
+const testRequest = async (req, res) => {
+  const { url, method = "GET", headers = {}, body, environment } = req.body;
+
+  // Build variables map from active environment { key: value, ... }
+  const envVars = {};
+  if (environment && Array.isArray(environment.variables)) {
+    environment.variables.forEach(({ key, value }) => {
+      if (key && key.trim()) envVars[key.trim()] = value || "";
+    });
+  }
+
+  // Resolve {{variable}} in URL before validation
+  const resolvedUrl = resolveVariables(url, envVars);
+
+  if (!resolvedUrl) {
     return res.status(400).json({ error: "URL is required" });
   }
 
   try {
-    new URL(url);
+    new URL(resolvedUrl);
   } catch {
     return res.status(400).json({ error: "Invalid URL format" });
   }
@@ -33,7 +53,7 @@ const testRequest = async (req, res) => {
 
     const axiosConfig = {
       method: upperMethod,
-      url,
+      url: resolvedUrl,
       headers: cleanHeaders,
       validateStatus: () => true,
       responseType: "text",
@@ -78,7 +98,7 @@ const testRequest = async (req, res) => {
 
     // Auto-save to history (fire-and-forget, never block the response)
     RequestHistory.create({
-      url,
+      url: resolvedUrl,
       method: upperMethod,
       headers: cleanHeaders,
       body: axiosConfig.data || null,

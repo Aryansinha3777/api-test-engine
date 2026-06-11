@@ -17,7 +17,7 @@ function kvToObj(pairs) {
   }, {});
 }
 
-export default function ApiTester({ onLoadRequest, loadedRequest, onClearLoaded }) {
+export default function ApiTester({ onLoadRequest, loadedRequest, onClearLoaded, activeEnv }) {
   const toast = useToast();
 
   const [url, setUrl]         = useState('');
@@ -77,6 +77,7 @@ export default function ApiTester({ onLoadRequest, loadedRequest, onClearLoaded 
         method,
         headers: kvToObj(headers),
         body: parsedBody,
+        environment: activeEnv || null,
       });
       setResponse(data);
     } catch (err) {
@@ -123,10 +124,19 @@ export default function ApiTester({ onLoadRequest, loadedRequest, onClearLoaded 
         <input
           value={url}
           onChange={e => setUrl(e.target.value)}
-          placeholder="https://api.example.com/endpoint"
+          placeholder="https://api.example.com/endpoint or {{baseUrl}}/endpoint"
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           style={{ flex: 1 }}
         />
+        {activeEnv && (
+          <span style={{
+            alignSelf: 'center', fontSize: 10, padding: '3px 8px',
+            borderRadius: 4, background: 'var(--green)', color: '#fff',
+            fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+          }}>
+            {activeEnv.name}
+          </span>
+        )}
         <button className="btn btn-primary" onClick={handleSend} disabled={loading}>
           {loading ? <><span className="spinner" />Sending</> : '▶ Send'}
         </button>

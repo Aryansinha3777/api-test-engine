@@ -20,3 +20,9 @@ export const deleteMockAPI = (id)        => api.delete(`/mock/${id}`);
 // History
 export const getHistory   = () => api.get('/history');
 export const clearHistory = () => api.delete('/history');
+
+// Environments
+export const getEnvironments    = ()          => api.get('/environments');
+export const createEnvironment  = (data)      => api.post('/environments', data);
+export const updateEnvironment  = (id, data)  => api.put(`/environments/${id}`, data);
+export const deleteEnvironment  = (id)        => api.delete(`/environments/${id}`);

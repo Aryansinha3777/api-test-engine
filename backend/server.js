@@ -32,6 +32,7 @@ app.use("/api/test", require("./routes/testRoutes"));
 app.use("/api/requests", require("./routes/requestRoutes"));
 app.use("/api/mock", require("./routes/mockRoutes"));
 app.use("/api/history", require("./routes/historyRoutes"));
+app.use("/api/environments", require("./routes/environmentRoutes"));
 
 
 
