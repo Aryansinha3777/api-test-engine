@@ -1,6 +1,17 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api' });
+// In local dev, VITE_API_BASE_URL is unset → '/api' is handled by Vite's proxy (vite.config.js).
+// In production (Vercel), VITE_API_BASE_URL points to the deployed backend, e.g.
+// https://api-test-engine-backend.vercel.app/api
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+const api = axios.create({ baseURL: API_BASE_URL });
+
+// The live mock server lives at <backend>/mock (not /api/mock).
+// Derive its base from API_BASE_URL so it works locally and on Vercel.
+export const MOCK_SERVER_BASE = API_BASE_URL === '/api'
+  ? '/mock'
+  : API_BASE_URL.replace(/\/api\/?$/, '/mock');
 
 
 export const sendRequest = (data) => api.post('/test', data);

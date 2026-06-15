@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getMockAPIs, createMockAPI, updateMockAPI, deleteMockAPI } from '../services/api';
+import { getMockAPIs, createMockAPI, updateMockAPI, deleteMockAPI, MOCK_SERVER_BASE } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import MethodSelect from '../components/MethodSelect';
 import JsonViewer from '../components/JsonViewer';
 
 const STATUS_CODES = [200, 201, 204, 400, 401, 403, 404, 422, 429, 500, 502, 503];
+
+// MOCK_SERVER_BASE is '/mock' locally (Vite proxy) or a full URL on Vercel.
+// Either way, prefixing window.location.origin gives a complete, copyable URL.
+const MOCK_BASE_URL = MOCK_SERVER_BASE.startsWith('http')
+  ? MOCK_SERVER_BASE
+  : `${window.location.origin}${MOCK_SERVER_BASE}`;
 
 const BLANK = {
   endpointPath: '',
@@ -111,7 +117,7 @@ export default function MockAPIs({ onLoad }) {
 
   const copyUrl = (path, e) => {
     e.stopPropagation();
-    const url = `${window.location.protocol}//${window.location.hostname}:5000/mock/${path}`;
+    const url = `${MOCK_BASE_URL}/${path}`;
     navigator.clipboard.writeText(url).then(() => toast('URL copied!', 'success'));
   };
 
@@ -210,7 +216,7 @@ export default function MockAPIs({ onLoad }) {
             onEdit={() => openEdit(selected)}
             onTest={() => {
               onLoad({
-                url: `${window.location.protocol}//${window.location.hostname}:5000/mock/${selected.endpointPath}`,
+                url: `${MOCK_BASE_URL}/${selected.endpointPath}`,
                 method: selected.method,
                 headers: {},
                 body: null,
@@ -285,8 +291,7 @@ function MockForm({ form, setForm, editing, saving, onSubmit, onCancel }) {
 }
 
 function MockDetail({ mock, onEdit, onTest }) {
-  const baseUrl = `${window.location.protocol}//${window.location.hostname}:5000`;
-  const fullUrl = `${baseUrl}/mock/${mock.endpointPath}`;
+  const fullUrl = `${MOCK_BASE_URL}/${mock.endpointPath}`;
 
   return (
     <div style={{ maxWidth:600 }}>

@@ -8,12 +8,19 @@ dotenv.config();
 const app = express();
 
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*",
+  credentials: true,
+}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 
 const connectDB = async () => {
+  // In serverless, this file can be re-invoked without a fresh process restart.
+  // Reuse the existing connection if one is already open/connecting.
+  if (mongoose.connection.readyState >= 1) return;
+
   try {
     const conn = await mongoose.connect(
       process.env.MONGO_URI || "mongodb://localhost:27017/api-test-engine"
@@ -21,7 +28,7 @@ const connectDB = async () => {
     console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    if (require.main === module) process.exit(1);
   }
 };
 
@@ -62,9 +69,16 @@ app.use((err, req, res, next) => {
 
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`   API Base:    http://localhost:${PORT}/api`);
-  console.log(`   Mock Server: http://localhost:${PORT}/mock`);
-  console.log(`   Health:      http://localhost:${PORT}/health`);
-});
+
+// Vercel runs this file as a serverless function and never calls app.listen.
+// Locally (npm run dev / node server.js), we still want the usual listen.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`   API Base:    http://localhost:${PORT}/api`);
+    console.log(`   Mock Server: http://localhost:${PORT}/mock`);
+    console.log(`   Health:      http://localhost:${PORT}/health`);
+  });
+}
+
+module.exports = app;
