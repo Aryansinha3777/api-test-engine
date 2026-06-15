@@ -96,17 +96,23 @@ const testRequest = async (req, res) => {
 
     const size = Buffer.byteLength(response.data || "", "utf8");
 
-    // Auto-save to history (fire-and-forget, never block the response)
-    RequestHistory.create({
-      url: resolvedUrl,
-      method: upperMethod,
-      headers: cleanHeaders,
-      body: axiosConfig.data || null,
-      statusCode: response.status,
-      responseTime,
-      responseSize: size,
-      success: true,
-    }).catch(() => {}); // silently ignore if history save fails
+    // Auto-save to history. Awaited (not fire-and-forget) because on Vercel's
+    // serverless functions, the process can freeze right after res.json() is
+    // called — a background promise would never get a chance to finish.
+    try {
+      await RequestHistory.create({
+        url: resolvedUrl,
+        method: upperMethod,
+        headers: cleanHeaders,
+        body: axiosConfig.data || null,
+        statusCode: response.status,
+        responseTime,
+        responseSize: size,
+        success: true,
+      });
+    } catch {
+      // History is a nice-to-have — never fail the main request because of it
+    }
 
     return res.json({
       success: true,
@@ -122,18 +128,22 @@ const testRequest = async (req, res) => {
     const responseTime = Date.now() - startTime;
 
     if (err.code) {
-      // Save failed/network error to history too
-      RequestHistory.create({
-        url,
-        method: upperMethod,
-        headers: {},
-        body: null,
-        statusCode: null,
-        responseTime,
-        responseSize: null,
-        success: false,
-        errorMessage: err.message,
-      }).catch(() => {});
+      // Save failed/network error to history too (awaited - see note above)
+      try {
+        await RequestHistory.create({
+          url,
+          method: upperMethod,
+          headers: {},
+          body: null,
+          statusCode: null,
+          responseTime,
+          responseSize: null,
+          success: false,
+          errorMessage: err.message,
+        });
+      } catch {
+        // never fail the response because of a history write error
+      }
 
       return res.status(200).json({
         success: false,
