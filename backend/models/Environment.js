@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const environmentSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     name: {
       type: String,
       required: [true, "Environment name is required"],
@@ -17,5 +22,7 @@ const environmentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+environmentSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Environment", environmentSchema);

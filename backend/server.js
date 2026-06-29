@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const { protect } = require("./middleware/authMiddleware");
 
 dotenv.config();
 
@@ -35,11 +36,13 @@ const connectDB = async () => {
 connectDB();
 
 
-app.use("/api/test", require("./routes/testRoutes"));
-app.use("/api/requests", require("./routes/requestRoutes"));
-app.use("/api/mock", require("./routes/mockRoutes"));
-app.use("/api/history", require("./routes/historyRoutes"));
-app.use("/api/environments", require("./routes/environmentRoutes"));
+app.use("/api/auth",         require("./routes/authRoutes"));        // public
+app.use("/api/test",         protect, require("./routes/testRoutes")); // protected
+app.use("/api/requests",     protect, require("./routes/requestRoutes"));
+app.use("/api/mock",         protect, require("./routes/mockRoutes"));
+app.use("/api/history",      protect, require("./routes/historyRoutes"));
+app.use("/api/environments", protect, require("./routes/environmentRoutes"));
+
 
 
 

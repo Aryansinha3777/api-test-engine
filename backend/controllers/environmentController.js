@@ -2,7 +2,7 @@ const Environment = require("../models/Environment");
 
 const getAll = async (req, res) => {
   try {
-    const envs = await Environment.find().sort({ createdAt: -1 });
+    const envs = await Environment.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.json({ success: true, data: envs });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch environments", details: err.message });
@@ -11,7 +11,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const env = await Environment.findById(req.params.id);
+    const env = await Environment.findOne({ _id: req.params.id, userId: req.user._id });
     if (!env) return res.status(404).json({ error: "Environment not found" });
     res.json({ success: true, data: env });
   } catch (err) {
@@ -23,7 +23,11 @@ const create = async (req, res) => {
   try {
     const { name, variables } = req.body;
     if (!name) return res.status(400).json({ error: "Name is required" });
-    const env = await Environment.create({ name, variables: variables || [] });
+    const env = await Environment.create({
+      name,
+      variables: variables || [],
+      userId: req.user._id,
+    });
     res.status(201).json({ success: true, data: env });
   } catch (err) {
     if (err.name === "ValidationError")
@@ -35,8 +39,8 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, variables } = req.body;
-    const env = await Environment.findByIdAndUpdate(
-      req.params.id,
+    const env = await Environment.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
       { name, variables },
       { new: true, runValidators: true }
     );
@@ -49,7 +53,7 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
   try {
-    const env = await Environment.findByIdAndDelete(req.params.id);
+    const env = await Environment.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
     if (!env) return res.status(404).json({ error: "Environment not found" });
     res.json({ success: true, message: "Environment deleted" });
   } catch (err) {

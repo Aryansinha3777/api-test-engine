@@ -1,19 +1,17 @@
 const MockAPI = require("../models/MockAPI");
 
-
 const getAllMocks = async (req, res) => {
   try {
-    const mocks = await MockAPI.find().sort({ createdAt: -1 });
+    const mocks = await MockAPI.find({ userId: req.user._id });
     res.json({ success: true, count: mocks.length, data: mocks });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch mock APIs", details: err.message });
   }
 };
 
-
 const getMockById = async (req, res) => {
   try {
-    const mock = await MockAPI.findById(req.params.id);
+    const mock = await MockAPI.findOne({ _id: req.params.id, userId: req.user._id });
     if (!mock) return res.status(404).json({ error: "Mock API not found" });
     res.json({ success: true, data: mock });
   } catch (err) {
@@ -22,11 +20,9 @@ const getMockById = async (req, res) => {
   }
 };
 
-
 const createMock = async (req, res) => {
   try {
-    const { endpointPath, method, responseBody, statusCode, responseHeaders, description } =
-      req.body;
+    const { endpointPath, method, responseBody } = req.body;
 
     if (!endpointPath || !method || responseBody === undefined) {
       return res.status(400).json({
@@ -34,14 +30,7 @@ const createMock = async (req, res) => {
       });
     }
 
-    const mock = await MockAPI.create({
-      endpointPath,
-      method: method.toUpperCase(),
-      responseBody,
-      statusCode: statusCode || 200,
-      responseHeaders,
-      description,
-    });
+    const mock = await MockAPI.create({ ...req.body, userId: req.user._id });
 
     res.status(201).json({
       success: true,
@@ -61,26 +50,20 @@ const createMock = async (req, res) => {
   }
 };
 
-
 const updateMock = async (req, res) => {
   try {
     const { endpointPath, method, responseBody, statusCode, responseHeaders, description } =
       req.body;
 
+    // findOne with userId ensures a user can only update their own mock
+    const mock = await MockAPI.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!mock) return res.status(404).json({ error: "Mock API not found" });
+
     const updated = await MockAPI.findByIdAndUpdate(
       req.params.id,
-      {
-        endpointPath,
-        method: method?.toUpperCase(),
-        responseBody,
-        statusCode,
-        responseHeaders,
-        description,
-      },
+      { endpointPath, method: method?.toUpperCase(), responseBody, statusCode, responseHeaders, description },
       { new: true, runValidators: true }
     );
-
-    if (!updated) return res.status(404).json({ error: "Mock API not found" });
 
     res.json({
       success: true,
@@ -97,10 +80,9 @@ const updateMock = async (req, res) => {
   }
 };
 
-
 const deleteMock = async (req, res) => {
   try {
-    const deleted = await MockAPI.findByIdAndDelete(req.params.id);
+    const deleted = await MockAPI.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
     if (!deleted) return res.status(404).json({ error: "Mock API not found" });
     res.json({ success: true, message: "Mock API deleted successfully" });
   } catch (err) {
@@ -109,12 +91,10 @@ const deleteMock = async (req, res) => {
   }
 };
 
-
 const resetHits = async (req, res) => {
-  
   try {
-    const updated = await MockAPI.findByIdAndUpdate(
-      req.params.id,
+    const updated = await MockAPI.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
       { hitCount: 0 },
       { new: true }
     );
@@ -125,11 +105,4 @@ const resetHits = async (req, res) => {
   }
 };
 
-module.exports = {
-  getAllMocks,
-  getMockById,
-  createMock,
-  updateMock,
-  deleteMock,
-  resetHits,
-};
+module.exports = { getAllMocks, getMockById, createMock, updateMock, deleteMock, resetHits };

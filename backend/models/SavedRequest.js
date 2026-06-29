@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const savedRequestSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     name: {
       type: String,
       required: [true, "Request name is required"],
@@ -39,5 +44,7 @@ const savedRequestSchema = new mongoose.Schema(
     timestamps: true, 
   }
 );
+
+savedRequestSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("SavedRequest", savedRequestSchema);

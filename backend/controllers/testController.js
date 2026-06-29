@@ -1,8 +1,6 @@
 const axios = require("axios");
 const RequestHistory = require("../models/RequestHistory");
 
-// Resolves {{variableName}} patterns using the provided variables map
-// e.g. "{{baseUrl}}/users" + { baseUrl: "http://localhost:3000" } => "http://localhost:3000/users"
 function resolveVariables(str, variables = {}) {
   if (!str || typeof str !== "string") return str;
   return str.replace(/\{\{(\w+)\}\}/g, (match, key) => {
@@ -13,7 +11,6 @@ function resolveVariables(str, variables = {}) {
 const testRequest = async (req, res) => {
   const { url, method = "GET", headers = {}, body, environment } = req.body;
 
-  // Build variables map from active environment { key: value, ... }
   const envVars = {};
   if (environment && Array.isArray(environment.variables)) {
     environment.variables.forEach(({ key, value }) => {
@@ -21,7 +18,6 @@ const testRequest = async (req, res) => {
     });
   }
 
-  // Resolve {{variable}} in URL before validation
   const resolvedUrl = resolveVariables(url, envVars);
 
   if (!resolvedUrl) {
@@ -43,7 +39,6 @@ const testRequest = async (req, res) => {
   const startTime = Date.now();
 
   try {
-    
     const cleanHeaders = {};
     Object.entries(headers).forEach(([k, v]) => {
       const cleanKey = k.trim();
@@ -62,7 +57,6 @@ const testRequest = async (req, res) => {
 
     if (["POST", "PUT", "PATCH"].includes(upperMethod) && body !== undefined) {
       axiosConfig.data = body;
-      
       const hasContentType = Object.keys(cleanHeaders).some(
         (k) => k.toLowerCase() === "content-type"
       );
@@ -96,11 +90,9 @@ const testRequest = async (req, res) => {
 
     const size = Buffer.byteLength(response.data || "", "utf8");
 
-    // Auto-save to history. Awaited (not fire-and-forget) because on Vercel's
-    // serverless functions, the process can freeze right after res.json() is
-    // called — a background promise would never get a chance to finish.
     try {
       await RequestHistory.create({
+        userId: req.user._id, // ← added
         url: resolvedUrl,
         method: upperMethod,
         headers: cleanHeaders,
@@ -128,9 +120,9 @@ const testRequest = async (req, res) => {
     const responseTime = Date.now() - startTime;
 
     if (err.code) {
-      // Save failed/network error to history too (awaited - see note above)
       try {
         await RequestHistory.create({
+          userId: req.user._id, // ← added
           url,
           method: upperMethod,
           headers: {},

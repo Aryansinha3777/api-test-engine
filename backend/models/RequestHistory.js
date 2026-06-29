@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const requestHistorySchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     url: {
       type: String,
       required: true,
@@ -48,5 +53,7 @@ const requestHistorySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+requestHistorySchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("RequestHistory", requestHistorySchema);

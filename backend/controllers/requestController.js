@@ -3,7 +3,7 @@ const SavedRequest = require("../models/SavedRequest");
 
 const getAllRequests = async (req, res) => {
   try {
-    const requests = await SavedRequest.find().sort({ createdAt: -1 });
+    const requests = await SavedRequest.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.json({ success: true, count: requests.length, data: requests });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch saved requests", details: err.message });
@@ -13,7 +13,7 @@ const getAllRequests = async (req, res) => {
 
 const getRequestById = async (req, res) => {
   try {
-    const request = await SavedRequest.findById(req.params.id);
+    const request = await SavedRequest.findOne({ _id: req.params.id, userId: req.user._id });
     if (!request) {
       return res.status(404).json({ error: "Saved request not found" });
     }
@@ -35,7 +35,7 @@ const createRequest = async (req, res) => {
       return res.status(400).json({ error: "name, url, and method are required" });
     }
 
-    const saved = await SavedRequest.create({ name, url, method, headers, body, description });
+    const saved = await SavedRequest.create({ ...req.body, userId: req.user._id });
     res.status(201).json({ success: true, data: saved });
   } catch (err) {
     if (err.name === "ValidationError") {
@@ -50,8 +50,8 @@ const updateRequest = async (req, res) => {
   try {
     const { name, url, method, headers, body, description } = req.body;
 
-    const updated = await SavedRequest.findByIdAndUpdate(
-      req.params.id,
+    const updated = await SavedRequest.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id }, // ← userId check added
       { name, url, method, headers, body, description },
       { new: true, runValidators: true }
     );
@@ -72,10 +72,11 @@ const updateRequest = async (req, res) => {
   }
 };
 
-
 const deleteRequest = async (req, res) => {
   try {
-    const deleted = await SavedRequest.findByIdAndDelete(req.params.id);
+    const deleted = await SavedRequest.findOneAndDelete(
+      { _id: req.params.id, userId: req.user._id } // ← userId check added
+    );
     if (!deleted) {
       return res.status(404).json({ error: "Saved request not found" });
     }
@@ -91,7 +92,7 @@ const deleteRequest = async (req, res) => {
 
 const deleteAllRequests = async (req, res) => {
   try {
-    const result = await SavedRequest.deleteMany({});
+    const result = await SavedRequest.deleteMany({ userId: req.user._id });
     res.json({ success: true, message: `Deleted ${result.deletedCount} requests` });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete requests", details: err.message });

@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 
 const mockAPISchema = new mongoose.Schema(
   {
-    
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     endpointPath: {
       type: String,
       required: [true, "Endpoint path is required"],
@@ -49,6 +53,6 @@ const mockAPISchema = new mongoose.Schema(
 );
 
 
-mockAPISchema.index({ endpointPath: 1, method: 1 }, { unique: true });
+mockAPISchema.index({ userId: 1, endpointPath: 1, method: 1 }, { unique: true });
 
 module.exports = mongoose.model("MockAPI", mockAPISchema);
