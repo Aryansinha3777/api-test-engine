@@ -11,6 +11,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export default api;
+
 export const MOCK_SERVER_BASE = API_BASE_URL === '/api'
   ? '/mock'
   : API_BASE_URL.replace(/\/api\/?$/, '/mock');
