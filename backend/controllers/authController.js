@@ -29,10 +29,11 @@ const register = async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
-    if (err.name === "ValidationError") {
-      return res.status(400).json({ error: err.message });
-    }
-    res.status(500).json({ error: "Registration failed", details: err.message });
+    console.error("REGISTER ERROR:", err.name, err.message, err.stack);
+  if (err.name === "ValidationError") {
+    return res.status(400).json({ error: err.message });
+  }
+  res.status(500).json({ error: "Registration failed", details: err.message });
   }
 };
 
@@ -64,6 +65,7 @@ const login = async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (err) {
+    console.error("LOGIN ERROR:", err.name, err.message, err.stack);
     res.status(500).json({ error: "Login failed", details: err.message });
   }
 };
